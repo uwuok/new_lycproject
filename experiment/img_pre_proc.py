@@ -3,21 +3,13 @@ import os
 import numpy as np
 import tensorflow as tf
 from keras.preprocessing import image
-from datetime import datetime
 
 current_path = os.path.abspath(os.path.dirname(__file__))
 os.chdir(current_path)
 
-# 初始化相機
-cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 4000)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 3000)
-cnt = 0
-stop_flag = False  # 全局停止旗標
-
-model_path = r'cnn_1214.h5'
+model_path = r'cnn_real_p85.h5'
 model = tf.keras.models.load_model(model_path)
-input_dir = r'E:\4000x3000_CNN\prototype_AI\prototype'
+input_dir = r'D:\4000x3000_CNN\prototype_AI\PPT_MODEL_1_P85\set1'
 
 ps2 = np.array([[252, 1156], [284, 1276], [316, 1364], [364, 1468], 
                 [404, 1524], [452, 1596], [492, 1644], [540, 1692], 
@@ -81,22 +73,25 @@ def predict(img):
     return predicted_class, predictions
 
 def save_predict(image, filename, predicted_class, predictions):
-    
     # 建立目錄，如果不存在
     def create_dir(directory):
         if not os.path.exists(directory):
             os.makedirs(directory)
-            
+    
+    # 保存到類別目錄
     base_dir = os.path.join(os.getcwd(), str(predicted_class))
+    create_dir(base_dir)
+    class_filename = os.path.join(base_dir, f"{os.path.splitext(filename)[0]}.jpg")
+    cv2.imwrite(class_filename, image)
+    print(f'圖片已保存到類別目錄: {class_filename}')
+    
+    # 如果是 confusion 狀態，另外保存到 confusion 目錄
     if np.max(predictions) < 0.8:
-        base_dir = os.path.join(os.getcwd(), "confusion")
-        base_dir = os.path.join(base_dir, str(predicted_class))
-
-    create_dir(base_dir)  # 確保目錄存在
-    filename = os.path.join(base_dir, f"{os.path.splitext(filename)[0]}.jpg")
-
-    cv2.imwrite(filename, image)
-    print(f'圖片已保存到: {filename}')
+        confusion_dir = os.path.join(os.getcwd(), "confusion", str(predicted_class))
+        create_dir(confusion_dir)
+        confusion_filename = os.path.join(confusion_dir, f"{os.path.splitext(filename)[0]}.jpg")
+        cv2.imwrite(confusion_filename, image)
+        print(f'圖片也保存到 confusion 目錄: {confusion_filename}')
     
 
 def load_pic(input_dir):
@@ -119,54 +114,9 @@ def load_pic(input_dir):
             save_predict(img, filename, predicted_class, predictions)
 
 
-# 建立目錄，如果不存在
-def create_dir(directory):
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
-# 根據預測類別保存圖片到對應資料夾
-def save_image(image, predicted_class, timestamp, predictions):
-    base_dir = os.path.join(os.getcwd(), str(predicted_class))
-
-    if np.max(predictions) < 0.9:
-        base_dir = os.path.join(os.getcwd(), "confusion")
-        base_dir = os.path.join(base_dir, str(predicted_class))
-
-    create_dir(base_dir)  # 確保目錄存在
-    filename = os.path.join(base_dir, f"photo_{timestamp}.jpg")
-
-    cv2.imwrite(filename, image)
-    print(f'圖片已保存到: {filename}')
-
-# 拍攝照片並保存
-def take_picture():
-    global cnt
-    if not cap.isOpened() or stop_flag:
-        print("停止拍攝或無法抓取鏡頭")
-        return
-
-    ret, frame = cap.read()
-    if ret:
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        # 進行預處理和預測
-        r2 = pre_proc(frame)
-        predicted_class, predictions = predict(r2)
-        # 保存圖片到對應資料夾
-        save_image(frame, predicted_class, timestamp, predictions)
-        cnt += 1
-        print(f"已拍攝照片並保存 [{cnt}]")
-    else:
-        print("無法讀取鏡頭 frame")
-
 if __name__ == '__main__':
-    # import time
+    import time
     # while True:
     #     predict()
     #     time.sleep(60)
-    # load_pic(input_dir)
-    
-    import time
-    while True:
-        take_picture()
-        time.sleep(30)
-        
+    load_pic(input_dir)
