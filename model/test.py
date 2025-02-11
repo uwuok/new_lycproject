@@ -9,9 +9,9 @@ import mysql.connector
 current_path = os.path.abspath(os.path.dirname(__file__))
 os.chdir(current_path)
 
-model_path = r'C:\Users\natsumi\Desktop\method_AI\best_model.h5'
+model_path = r'C:\Users\user\Desktop\cnc_gui_master\method_AI\best_model.h5'
 model = tf.keras.models.load_model(model_path)
-input_dir = r"C:\Users\natsumi\Desktop\method_AI\origin"
+input_dir = r"C:\Users\user\Desktop\cnc_gui_master\method_AI\origin"
 
 
 ps1 = np.array([[152, 196], [648, 244], [548, 300], [496, 344],
@@ -33,7 +33,8 @@ def update_sql_r2(flusher_level_result_value):
         host="localhost",  # MySQL 伺服器地址
         user="root",       # 使用者名稱
         password="ncut2024",  # 密碼
-        database="cnc_db"  # 資料庫名稱
+        database="cnc_db",  # 資料庫名稱
+        auth_plugin="mysql_native_password"
     )
 
     # 創建一個游標對象
@@ -43,23 +44,22 @@ def update_sql_r2(flusher_level_result_value):
     # flusher_level_result_value = 10  # 假設要插入 10
 
     # 插入資料到 `Level_result` 表格中的 `flusher_level_result`
-    insert_query = """
-    INSERT INTO Level_result (flusher_level_result)
-    VALUES (%s)
+    query = """
+    UPDATE level_result
+    SET flusher_level_result = %s
     """
 
     # 插入資料的參數 (可以根據需求修改 excluder_level_result)
-    values = (flusher_level_result_value, )  # 假設 excluder_level_result 為 4
+    values = (flusher_level_result_value, )  
 
     # 執行插入操作
-    cursor.execute(insert_query, values)
+    cursor.execute(query, values)
 
     # 提交交易
     db_connection.commit()
 
     # 顯示操作結果
-    print(
-        f"Inserted flusher_level_result: {flusher_level_result_value}, excluder_level_result: 4")
+    print(f"update record id 1 with flusher_level_result_value: {flusher_level_result_value}")
 
     # 關閉游標和資料庫連接
     cursor.close()
